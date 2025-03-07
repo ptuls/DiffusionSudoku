@@ -1,5 +1,6 @@
-import random
 import copy
+import random
+
 
 def find_empty(board, length=9):
     """Find an empty cell (with 0) in the board."""
@@ -9,23 +10,30 @@ def find_empty(board, length=9):
                 return i, j
     return None
 
+
 def is_valid(board, row, col, num, outer_grid_size=9):
     """Check if it's valid to place num at board[row][col]."""
     # Check row
     if num in board[row]:
         return False
+
     # Check column
     for i in range(outer_grid_size):
         if board[i][col] == num:
             return False
+
     # Check the 3x3 subgrid
-    inner_grid_size = int(outer_grid_size ** 0.5)
-    start_row, start_col = (row // inner_grid_size) * inner_grid_size, (col // inner_grid_size) * inner_grid_size
+    inner_grid_size = int(outer_grid_size**0.5)
+    start_row, start_col = (row // inner_grid_size) * inner_grid_size, (
+        col // inner_grid_size
+    ) * inner_grid_size
     for i in range(start_row, start_row + inner_grid_size):
         for j in range(start_col, start_col + inner_grid_size):
             if board[i][j] == num:
                 return False
+
     return True
+
 
 def get_possible_numbers(board, row, col, outer_grid_size=9):
     """Return the set of valid numbers for the cell at (row, col)."""
@@ -34,12 +42,15 @@ def get_possible_numbers(board, row, col, outer_grid_size=9):
     possibilities -= set(board[row])
     possibilities -= {board[i][col] for i in range(outer_grid_size)}
     # Remove numbers from the 3x3 subgrid
-    inner_grid_size = int(outer_grid_size ** 0.5)
-    start_row, start_col = (row // inner_grid_size) * inner_grid_size, (col // inner_grid_size) * inner_grid_size
+    inner_grid_size = int(outer_grid_size**0.5)
+    start_row, start_col = (row // inner_grid_size) * inner_grid_size, (
+        col // inner_grid_size
+    ) * inner_grid_size
     for i in range(start_row, start_row + inner_grid_size):
         for j in range(start_col, start_col + inner_grid_size):
             possibilities.discard(board[i][j])
     return possibilities
+
 
 def find_empty_mrv(board, outer_grid_size=9):
     """
@@ -47,7 +58,7 @@ def find_empty_mrv(board, outer_grid_size=9):
     Returns (row, col, candidates) or None if board is full.
     """
     best = None
-    min_options = outer_grid_size+1  # More than maximum candidates (9)
+    min_options = outer_grid_size + 1  # More than maximum candidates (9)
     for i in range(outer_grid_size):
         for j in range(outer_grid_size):
             if board[i][j] == 0:
@@ -60,6 +71,7 @@ def find_empty_mrv(board, outer_grid_size=9):
                         return best
     return best
 
+
 # def solve_mrv(board, filled, target, outer_grid_size):
 #     """
 #     Backtracking solver using the MRV heuristic.
@@ -67,7 +79,7 @@ def find_empty_mrv(board, outer_grid_size=9):
 #     """
 #     if filled >= target:
 #         return True
-    
+
 #     cell = find_empty_mrv(board, outer_grid_size)
 #     if cell is None:
 #         return True  # Board is full (target should be 81 in this case)
@@ -76,7 +88,7 @@ def find_empty_mrv(board, outer_grid_size=9):
 #     # Convert candidates to a list and shuffle them to add randomness.
 #     candidate_list = list(candidates)
 #     random.shuffle(candidate_list)
-    
+
 #     for num in candidate_list:
 #         if is_valid(board, row, col, num, outer_grid_size):
 #             board[row][col] = num
@@ -91,25 +103,26 @@ def solve_mrv(board, filled, target, outer_grid_size, start_time=None, timeout=2
     """
     Backtracking solver using the MRV heuristic.
     Stops after filling 'target' cells or if timeout is reached.
-    
+
     Args:
         start_time: Time when solving started (set automatically on first call)
         timeout: Maximum seconds to attempt solving before giving up
     """
     import time
+
     if start_time is None:
         start_time = time.time()
     elif time.time() - start_time > timeout:
         return False  # Timeout reached
-        
+
     if filled >= target:
         return True
-    
+
     cell = find_empty_mrv(board, outer_grid_size)
     if cell is None:
         return True
     row, col, candidates = cell
-    
+
     # If no candidates available, fail fast
     if not candidates:
         return False
@@ -117,7 +130,7 @@ def solve_mrv(board, filled, target, outer_grid_size, start_time=None, timeout=2
     # Convert candidates to a list and shuffle them to add randomness
     candidate_list = list(candidates)
     random.shuffle(candidate_list)
-    
+
     for num in candidate_list:
         if is_valid(board, row, col, num, outer_grid_size):
             board[row][col] = num
@@ -137,7 +150,7 @@ def plant_random_seeds(board, seed_count, outer_grid_size=9):
     seeds_planted = 0
     attempts = 0
     max_attempts = seed_count * 10  # Prevent an infinite loop if board fills up.
-    
+
     while seeds_planted < seed_count and attempts < max_attempts:
         empty_cell = find_empty(board, outer_grid_size)
         if empty_cell is None:
@@ -159,13 +172,15 @@ def generate_board(completeness=100, seed_count=0, num_retries=100, outer_grid_s
     """
     target = int(outer_grid_size * outer_grid_size * completeness / 100)
     target = max(1, target)
-    
+
     for attempt in range(num_retries):
         board = [[0 for _ in range(outer_grid_size)] for _ in range(outer_grid_size)]
         seeds_planted = plant_random_seeds(board, seed_count, outer_grid_size)
         if solve_mrv(board, filled=seeds_planted, target=target, outer_grid_size=outer_grid_size):
             return board
-    raise Exception(f"Failed to generate a board with {completeness}% completeness after {num_retries} attempts.")
+    raise Exception(
+        f"Failed to generate a board with {completeness}% completeness after {num_retries} attempts."
+    )
 
 
 def verify_board(board, outer_grid_size=9):
@@ -185,7 +200,7 @@ def verify_board(board, outer_grid_size=9):
         if sorted(col) != list(range(1, outer_grid_size + 1)):
             return False
     # Check 3x3 subgrids
-    inner_grid_size = int(outer_grid_size ** 0.5)
+    inner_grid_size = int(outer_grid_size**0.5)
     for start_row in range(0, outer_grid_size, inner_grid_size):
         for start_col in range(0, outer_grid_size, inner_grid_size):
             block = []
@@ -196,9 +211,10 @@ def verify_board(board, outer_grid_size=9):
                 return False
     return True
 
+
 def print_board(board, outer_grid_size=9):
     """Nicely print the Sudoku board."""
-    inner_grid_size = int(outer_grid_size ** 0.5)
+    inner_grid_size = int(outer_grid_size**0.5)
     for i in range(outer_grid_size):
         line = ""
         for j in range(outer_grid_size):
@@ -209,6 +225,7 @@ def print_board(board, outer_grid_size=9):
         print(line)
         if (i + 1) % inner_grid_size == 0 and i != outer_grid_size - 1:
             print("-" * (outer_grid_size * 2 - 1))
+
 
 if __name__ == "__main__":
     # Example: Generate a board with 20% completeness and 3 random seeds

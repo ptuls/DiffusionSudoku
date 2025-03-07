@@ -1,3 +1,6 @@
 *cpython*
 generated_boards*
 __pycache__
+
+*.iml
+*.png
