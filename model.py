@@ -3,7 +3,7 @@ import torch.nn as nn
 from einops import rearrange
 
 from net import Transformer
-from sampling import cosine_schedule
+from util import cosine_schedule
 from decoder import MaskGITDecoder
 
 

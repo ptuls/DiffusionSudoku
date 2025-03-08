@@ -8,7 +8,7 @@ from pathlib import Path
 from dataset import SudokuDataset
 from model import DiscreteDiffusion
 from sudoku_mrv import verify_board
-from util import visualize_sudoku
+from visual import visualize_sudoku
 
 
 def sample_board(model, generated_dir, total_step):
