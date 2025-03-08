@@ -27,7 +27,7 @@ class DiscreteDiffusion(nn.Module):
         self.full_mask_token_prob = full_mask_token_prob
         self.noise_schedule = noise_schedule
         self.mask_id = 0
-        
+
         self.decoder = TopKThresholdDecoder(
             outer_grid_size=outer_grid_size,
             mask_id=self.mask_id,

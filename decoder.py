@@ -78,10 +78,10 @@ class TopKThresholdDecoder:
 
 class MaskGITDecoder:
     def __init__(
-            self,
-            outer_grid_size,
-            mask_id=0,
-            noise_schedule=cosine_schedule,
+        self,
+        outer_grid_size,
+        mask_id=0,
+        noise_schedule=cosine_schedule,
     ):
         self.outer_grid_size = outer_grid_size
         self.mask_id = mask_id
@@ -93,7 +93,6 @@ class MaskGITDecoder:
         batch_size=32,
         timesteps=128,
         temperature=1.0,
-        can_remask_prev_masked=False,
         no_mask_token_prob=0.0,
     ):
         device = next(model.parameters()).device
@@ -132,13 +131,8 @@ class MaskGITDecoder:
             scores_bl = 1 - probs_without_temperature.gather(2, pred_ids[..., None])
             scores_bl = rearrange(scores_bl, "... 1 -> ...")
 
-            if not can_remask_prev_masked:
-                scores_bl = scores_bl.masked_fill(~is_mask, -1e5)
-            else:
-                assert no_mask_token_prob > 0.0, (
-                    "without training with some of the non-masked tokens forced to predict, "
-                    "not sure if the logits will be meaningful for these token"
-                )
+            scores_bl = scores_bl.masked_fill(~is_mask, -1e5)
+
 
         board_bhw = board_bl.reshape(board_bhw.shape)
 
