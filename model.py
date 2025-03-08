@@ -9,7 +9,13 @@ from sampling import cosine_schedule, gumbel_sample, top_k
 
 class DiscreteDiffusion(nn.Module):
     def __init__(
-        self, outer_grid_size=9, head_dim=64, heads=8, depth=12, full_mask_token_prob=0.025
+        self,
+        outer_grid_size=9,
+        head_dim=64,
+        heads=8,
+        depth=12,
+        full_mask_token_prob=0.025,
+        noise_schedule=cosine_schedule,
     ):
         super().__init__()
         # includes an additional MASK token
@@ -19,6 +25,7 @@ class DiscreteDiffusion(nn.Module):
             head_dim, heads, num_classes, depth, seq_len=outer_grid_size * outer_grid_size
         )
         self.full_mask_token_prob = full_mask_token_prob
+        self.noise_schedule = noise_schedule
 
     def forward(self, board_bl, labels=None):
         """
@@ -41,7 +48,7 @@ class DiscreteDiffusion(nn.Module):
         _, l = board_bl.shape
 
         rand_time = torch.rand(board_bhw.shape[0], device=board_bl.device)
-        rand_mask_probs = cosine_schedule(rand_time)
+        rand_mask_probs = self.noise_schedule(rand_time)
         num_token_masked = (l * rand_mask_probs).round().clamp(min=1)
 
         batch_randperm = torch.rand((b, l), device=board_bhw.device).argsort(dim=-1)
@@ -115,9 +122,10 @@ class DiscreteDiffusion(nn.Module):
             if not can_remask_prev_masked:
                 scores_bl = scores_bl.masked_fill(~is_mask, -1e5)
             else:
-                assert (
-                    self.no_mask_token_prob > 0.0
-                ), "without training with some of the non-masked tokens forced to predict, not sure if the logits will be meaningful for these token"
+                assert self.no_mask_token_prob > 0.0, (
+                    "without training with some of the non-masked tokens forced to predict, "
+                    "not sure if the logits will be meaningful for these token"
+                )
 
         board_bhw = board_bl.reshape(board_bhw.shape)
 

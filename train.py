@@ -11,8 +11,41 @@ from sudoku_mrv import verify_board
 from util import visualize_sudoku
 
 
+def sample_board(model, generated_dir, total_step):
+    model.eval()
+    # sample
+    with torch.no_grad():
+        generated_boards = model.generate(batch_size=10)
+        boards = generated_boards.chunk(generated_boards.shape[0], dim=0)
+        boards = [b.squeeze(0).tolist() for b in boards]
+        results = []
+        board_figs = []
+        for board in boards:
+            results.append(verify_board(board, outer_grid_size=model.outer_grid_size))
+            board_figs.append(visualize_sudoku(board, outer_grid_size=model.outer_grid_size))
+
+        num_valid_boards = sum(results)
+        num_boards = len(results)
+        proportion_valid_boards = float(num_valid_boards) / num_boards
+
+        logger.info(f"proportion valid boards: {proportion_valid_boards:.2f}")
+        canvas_width = board_figs[0].width * len(boards)
+        canvas_height = board_figs[0].height
+
+        # create canvas
+        canvas = Image.new("RGB", (canvas_width, canvas_height), "white")
+        for i, board_fig in enumerate(board_figs):
+            canvas.paste(board_fig, (board_fig.width * i, 0))
+        canvas.save(generated_dir / f"generated_boards_{total_step}.png")
+        canvas.close()
+
+        # Clean up
+        for fig in board_figs:
+            fig.close()
+
+
 def train(
-    model,
+    model: DiscreteDiffusion,
     outer_grid_size=9,
     num_epochs=10,
     batch_size=32,
@@ -64,7 +97,7 @@ def train(
     logger.info("start training")
     for epoch in range(1, num_epochs + 1):
         model.train()
-        total_loss = 0
+        total_loss = 0.0
 
         progress_bar = tqdm(dataloader, desc=f"Epoch {epoch}/{num_epochs}")
         for batch_idx, boards in enumerate(progress_bar):
@@ -80,38 +113,7 @@ def train(
 
             total_step += 1
             if total_step % eval_every_n_step == 0:
-                model.eval()
-                # sample
-                with torch.no_grad():
-                    generated_boards = model.generate(batch_size=10)
-                    boards = generated_boards.chunk(generated_boards.shape[0], dim=0)
-                    boards = [b.squeeze(0).tolist() for b in boards]
-                    results = []
-                    board_figs = []
-                    for board in boards:
-                        results.append(verify_board(board, outer_grid_size=model.outer_grid_size))
-                        board_figs.append(
-                            visualize_sudoku(board, outer_grid_size=model.outer_grid_size)
-                        )
-
-                    num_valid_boards = sum(results)
-                    num_boards = len(results)
-                    proportion_valid_boards = float(num_valid_boards) / num_boards
-
-                    logger.info(f"proportion valid boards: {proportion_valid_boards:.2f}")
-                    canvas_width = board_figs[0].width * len(boards)
-                    canvas_height = board_figs[0].height
-
-                    # create canvas
-                    canvas = Image.new("RGB", (canvas_width, canvas_height), "white")
-                    for i, board_fig in enumerate(board_figs):
-                        canvas.paste(board_fig, (board_fig.width * i, 0))
-                    canvas.save(generated_dir / f"generated_boards_{total_step}.png")
-                    canvas.close()
-
-                    # Clean up
-                    for fig in board_figs:
-                        fig.close()
+                sample_board(model, generated_dir, total_step)
 
     return model
 
