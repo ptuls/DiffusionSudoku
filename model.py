@@ -30,7 +30,6 @@ class DiscreteDiffusion(nn.Module):
         
         # Initialize the MaskGIT decoder
         self.decoder = MaskGITDecoder(
-            model=self,
             outer_grid_size=outer_grid_size,
             mask_id=self.mask_id,
             noise_schedule=noise_schedule,
@@ -88,6 +87,7 @@ class DiscreteDiffusion(nn.Module):
         can_remask_prev_masked=False,
     ):
         return self.decoder.generate(
+            model=self.model,
             batch_size=batch_size,
             timesteps=timesteps,
             temperature=temperature,
