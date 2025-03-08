@@ -4,7 +4,7 @@ from einops import rearrange
 
 from net import Transformer
 from util import cosine_schedule
-from decoder import MaskGITDecoder
+from decoder import TopKThresholdDecoder
 
 
 class DiscreteDiffusion(nn.Module):
@@ -28,8 +28,7 @@ class DiscreteDiffusion(nn.Module):
         self.noise_schedule = noise_schedule
         self.mask_id = 0
         
-        # Initialize the MaskGIT decoder
-        self.decoder = MaskGITDecoder(
+        self.decoder = TopKThresholdDecoder(
             outer_grid_size=outer_grid_size,
             mask_id=self.mask_id,
             noise_schedule=noise_schedule,

@@ -119,7 +119,6 @@ def train(
 
 
 if __name__ == "__main__":
-    # Example usage
     outer_grid_size = 9
     model = DiscreteDiffusion(outer_grid_size=outer_grid_size)
     trained_model = train(model, outer_grid_size=outer_grid_size)
